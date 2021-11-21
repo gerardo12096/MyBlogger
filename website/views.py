@@ -13,7 +13,7 @@ mydb = mysql.connector.connect(
     host="localhost",
     user="root",
     passwd="America!1324",
-    database='users'
+    database='user'
 )
 
 #User must be logged in successfully to access the home page
@@ -64,7 +64,7 @@ def delete_post(id):
     
     if not post:
         flash("Post does not exist.", category='error')
-    elif current_user.id != post.id:
+    elif current_user.id != post.author:
         flash('You do not have permission to delete this post.', category='error')
     else:
         db.session.delete(post)
@@ -86,14 +86,14 @@ def posts(username):
 @login_required
 def create_comment(post_id):
     text = request.form.get('text')
+    sentiment = request.form.get('sentiment')
+    cursor = mydb.cursor()
     if not text:
-        print("hi")
         flash('Comment cannot be empty', category='error')
     else:
-        print("work")
         post = Post.query.filter_by(id = post_id)
         if post:
-            comment=Comment(text=text, author=current_user.id, post_id=post_id)
+            comment=Comment(text=text, author=current_user.id, sentiment=sentiment, post_id=post_id)
             db.session.add(comment)
             db.session.commit()
         else:
@@ -114,8 +114,4 @@ def delete_comment(comment_id):
         db.session.commit()
 
     return redirect(url_for('views.home'))
-
-@views.route("/status-post/<post_id>", methods=['POST'])
-@login_required
-def create_status(status_id):
-    pass
+    

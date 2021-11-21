@@ -7,7 +7,7 @@ mydb = mysql.connector.connect(
 )
 #This creates the initial database to store user credentials
 my_cursor = mydb.cursor()
-my_cursor.execute("CREATE DATABASE users");
+my_cursor.execute("CREATE DATABASE user");
 
 for db in my_cursor:
     print(db)

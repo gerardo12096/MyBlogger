@@ -18,7 +18,6 @@ class User(db.Model, UserMixin):
     last_name = db.Column(db.String(150))
     posts = db.relationship('Post', backref='user', passive_deletes=True)
     comments = db.relationship('Comment', backref='user', passive_deletes=True)
-    status = db.relationship('Status', backref='user', passive_deletes=True)
 
 class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -28,7 +27,6 @@ class Post(db.Model):
     date_created = db.Column(db.DateTime(timezone=True), default=func.now())
     author = db.Column(db.Integer,db.ForeignKey('user.id', ondelete="CASCADE"), nullable=False)
     comments = db.relationship('Comment', backref='post', passive_deletes=True)
-    status = db.relationship('Status', backref='post', passive_deletes=True)
 
     
 class Comment(db.Model):
@@ -36,8 +34,5 @@ class Comment(db.Model):
     text = db.Column(db.String(200), nullable=False)
     date_created = db.Column(db.DateTime(timezone=True), default=func.now())
     author = db.Column(db.Integer,db.ForeignKey('user.id', ondelete="CASCADE"), nullable=False)
+    sentiment = db.Column(db.String(20), nullable=False)
     post_id = db.Column(db.Integer,db.ForeignKey('post.id', ondelete="CASCADE"), nullable=False)
-    status = db.relationship('Status', backref='comment', passive_deletes=True)
-
-class Form(FlaskForm):
-    id = db.Column(db.Integer, primary_key=True)

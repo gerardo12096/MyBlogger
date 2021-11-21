@@ -6,7 +6,7 @@
   <div class="card border-dark">
     <div class="card-header d-flex justify-content-between align-items-center">
       <a href="/posts/{{post.user.username}}">{{post.user.username}}</a>
-      {% if user.id ==post.author %}
+      {% if user.id == post.author %}
       <div class="btn-group">
         <button
           type="button"
@@ -48,7 +48,7 @@
         <div>
           <a href="/posts/{{comment.user.username}}"
             >{{comment.user.username}}</a
-          >: {{comment.text}}
+          >: {{comment.text}} {{comment.sentiment}}
           </div>
           <div>
             <small class="text-muted"> {{comment.date_created}} </small>
@@ -82,20 +82,17 @@
     {% endif %}
     </p>
 
-
-    
-    <form method="POST">
-      {{form.csrf_token}}
-      {{form.status}}
-      <input type="submit">
-    </form>
-
-
     <form
       class="input-group mb-3"
       method="POST"
       action="/create-comment/{{post.id}}"
     >
+        <label for="sentiment">Choose a sentiment:</label>
+<select name="sentiment" id="sentiment">
+  <option value="positive">Positive</option>
+  <option value="negative">Negative</option>
+</select>
+<br />
       <input
         type="text"
         id="text"

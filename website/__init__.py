@@ -10,7 +10,7 @@ DB_NAME = "database.db"
 def create_app():
     app = Flask(__name__)
     app.config['SECRET_KEY'] = 'hjshjhdjah kjshkjdhjs'
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:America!1324@localhost/users'
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:America!1324@localhost/user'
     db.init_app(app)
 
     from .views import views
