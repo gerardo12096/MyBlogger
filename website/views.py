@@ -42,11 +42,22 @@ def home():
 @views.route("/create_post", methods=['GET','POST'])
 @login_required
 def create_post():
-    if request.method == "POST":
+    cursor = mydb.cursor()
+    query = "SELECT COUNT(post.author) FROM post WHERE post.date_created = current_date AND post.author = %s"
+    cursor.execute(query,[current_user.id])
+    number_of_posts = cursor.fetchone()[0] + 1
+    mydb.commit()
+    cursor.close()
+    print(current_user.id)
+    print(number_of_posts)
+    if(number_of_posts > 2):
+        flash("Can not post more than twice in one day!", category='error')
+        return redirect(url_for('views.home'))
+    elif request.method == "POST":
+        print()
         subject = request.form.get('subject')
         description = request.form.get('description')
         tag = request.form.get('tag')
-        
         if not subject:
             flash('Subject cannot be empty', category='error')
         else:
@@ -62,9 +73,8 @@ def create_post():
 def delete_post(id):
     post = Post.query.filter_by(id=id).first()
     
-    if not post:
-        flash("Post does not exist.", category='error')
-    elif current_user.id != post.author:
+
+    if current_user.id != post.author:
         flash('You do not have permission to delete this post.', category='error')
     else:
         db.session.delete(post)
@@ -82,22 +92,45 @@ def posts(username):
     posts = user.posts
     return render_template("posts.html", user=current_user, posts=posts, username=username)
 
-@views.route("/create-comment/<post_id>", methods=['POST'])
+@views.route("/create-comment/<post_id>", methods=['GET','POST'])
 @login_required
 def create_comment(post_id):
     text = request.form.get('text')
     sentiment = request.form.get('sentiment')
     cursor = mydb.cursor()
-    if not text:
-        flash('Comment cannot be empty', category='error')
+    query = "SELECT COUNT(comment.id) FROM comment INNER JOIN post ON comment.post_id = post.id WHERE post.id = (%s) AND comment.author = (%s)"
+    cursor.execute(query,(post_id,current_user.id))
+    result = cursor.fetchone()[0] + 1
+    # mydb.commit()
+    # cursor.close()
+    # cursor = mydb.cursor()
+    query2 = "SELECT COUNT(*) FROM comment WHERE comment.date_created = CURRENT_DATE AND comment.author = %s"
+    cursor.execute(query2,[current_user.id])
+    commented_today = cursor.fetchone()[0] + 1
+    query3 = "SELECT DISTINCT post.author FROM post WHERE post.id = %s"
+    cursor.execute(query3,[post_id])
+    current_author = cursor.fetchone()[0]
+    mydb.commit()
+    cursor.close()
+    print(current_user.id)
+    print(result)
+    if current_user.id == current_author:
+        flash("Can't comment on own post!", category='error')
+    elif result > 1:
+        flash("Cannot comment more than once on the same post!", category='error')
+    elif(commented_today > 3):
+        flash("Cannot comment more than 3x a day!", category='error')
     else:
-        post = Post.query.filter_by(id = post_id)
-        if post:
-            comment=Comment(text=text, author=current_user.id, sentiment=sentiment, post_id=post_id)
-            db.session.add(comment)
-            db.session.commit()
+        if not text:
+            flash('Comment cannot be empty!', category='error')
         else:
-            flash('Post does not exist', category='error')
+            post = Post.query.filter_by(id = post_id)
+            if post:
+                comment=Comment(text=text, author=current_user.id, sentiment=sentiment, post_id=post_id)
+                db.session.add(comment)
+                db.session.commit()
+            else:
+                flash('Post does not exist', category='error')
     return redirect(url_for('views.home'))
 
 @views.route("/delete-comment/<comment_id>")
@@ -112,6 +145,5 @@ def delete_comment(comment_id):
     else:
         db.session.delete(comment)
         db.session.commit()
-
     return redirect(url_for('views.home'))
     
