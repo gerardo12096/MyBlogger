@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, flash, jsonify, redirect, url_for
 from flask_login import login_required, current_user
-from .models import Post, User, Comment
+from .models import Post, Users, Comment, Tag
 from flask_wtf import FlaskForm
 from . import db
 import json
@@ -13,7 +13,7 @@ mydb = mysql.connector.connect(
     host="localhost",
     user="root",
     passwd="America!1324",
-    database='user'
+    database='project_db'
 )
 
 #User must be logged in successfully to access the home page
@@ -37,7 +37,7 @@ def home():
     #                 cursor.execute(command)
     # mydb.commit()
     #keeps the user in the home page unless the user decides to logout
-    return render_template("home.html", user=current_user, posts = posts)
+    return render_template("home.html", users=current_user, posts = posts)
 
 @views.route("/create_post", methods=['GET','POST'])
 @login_required
@@ -57,16 +57,46 @@ def create_post():
         print()
         subject = request.form.get('subject')
         description = request.form.get('description')
-        tag = request.form.get('tag')
+        tag_list = request.form.get('tag')
+        tags = tag_list.split("#")
+        print(tags)
         if not subject:
             flash('Subject cannot be empty', category='error')
         else:
-            post = Post(subject=subject, description=description, tag=tag, author=current_user.id)
+            post = Post(subject=subject, description=description, author=current_user.id)
             db.session.add(post)
             db.session.commit()
+            for tag in tags:
+                tags = Tag(text=tag, author=current_user.id,post_id=post.id)
+                db.session.add(tags)
+                db.session.commit()
             flash('Post created!', category='success')
             return redirect(url_for('views.home'))
-    return render_template('create_post.html', user=current_user)
+    return render_template('create_post.html', users=current_user)
+
+@views.route("/initialize", methods=['GET','POST'])
+@login_required
+def initialize():
+    cursor=mydb.cursor()
+    if request.method=='POST':
+        flash("Initialized the database!", category='success')
+        fd = open('projectDB.sql', 'r')
+        sqlFile = fd.read()
+        fd.close()
+        sqlCommands = sqlFile.split(';')
+        for command in sqlCommands:
+                if command.strip() != '':
+                    print(command)
+                    cursor.execute(command)
+                    mydb.commit()
+        # sqlfile = open('university.sql', 'r')
+        # query = "".join(sqlfile.readlines())
+        # cursor.execute(query, multi=True)
+        # mydb.commit()
+        # print(query)
+        # cursor.close()
+        # sqlfile.close()
+    return render_template('initialize.html', users=current_user)
 
 @views.route("/delete-post/<id>")
 @login_required
@@ -85,12 +115,12 @@ def delete_post(id):
 @views.route("/posts/<username>")
 @login_required
 def posts(username):
-    user = User.query.filter_by(username=username).first()
-    if not user:
+    users = Users.query.filter_by(username=username).first()
+    if not users:
         flash('No user with that username exists.', category='error')
         return redirect(url_for('views.home'))
-    posts = user.posts
-    return render_template("posts.html", user=current_user, posts=posts, username=username)
+    posts = users.posts
+    return render_template("posts.html", users=current_user, posts=posts, username=username)
 
 @views.route("/create-comment/<post_id>", methods=['GET','POST'])
 @login_required
@@ -126,7 +156,7 @@ def create_comment(post_id):
         else:
             post = Post.query.filter_by(id = post_id)
             if post:
-                comment=Comment(text=text, author=current_user.id, sentiment=sentiment, post_id=post_id)
+                comment=Comment(text=text,sentiment=sentiment, author=current_user.id, post_id=post_id)
                 db.session.add(comment)
                 db.session.commit()
             else:
@@ -141,7 +171,7 @@ def delete_comment(comment_id):
     if not comment:
         flash('Comment does not exists', categor='error')
     elif current_user.id != comment.author and current_user.id != comment.post.author:
-            flash('You do not have permission to delete this comment.', categor='error')
+            flash('You do not have permission to delete this comment.', category='error')
     else:
         db.session.delete(comment)
         db.session.commit()

@@ -10,7 +10,7 @@ DB_NAME = "database.db"
 def create_app():
     app = Flask(__name__)
     app.config['SECRET_KEY'] = 'hjshjhdjah kjshkjdhjs'
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:America!1324@localhost/user'
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:America!1324@localhost/project_db'
     db.init_app(app)
 
     from .views import views
@@ -19,7 +19,7 @@ def create_app():
     app.register_blueprint(views, url_prefix='/')
     app.register_blueprint(auth, url_prefix='/')
 
-    from .models import User, Post, Comment
+    from .models import Users, Post, Comment,Tag
 
     create_database(app)
 
@@ -29,7 +29,7 @@ def create_app():
 
     @login_manager.user_loader
     def load_user(id):
-        return User.query.get(int(id))
+        return Users.query.get(int(id))
 
     return app
 
