@@ -12,7 +12,7 @@ views = Blueprint('views', __name__)
 mydb = mysql.connector.connect(
     host="localhost",
     user="root",
-    passwd="America!1324",
+    passwd="",
     database='project_db'
 )
 
