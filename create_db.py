@@ -3,7 +3,7 @@ import mysql.connector
 mydb = mysql.connector.connect(
     host="localhost",
     user="root",
-    passwd="America!1324"
+    passwd=""
 )
 #This creates the initial database to store user credentials
 my_cursor = mydb.cursor()
